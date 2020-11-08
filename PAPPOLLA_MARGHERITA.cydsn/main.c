@@ -35,6 +35,11 @@
 *   \brief Address of the Control register 1
 */
 #define LIS3DH_CTRL_REG1 0x20
+/**
+*   \brief Address of the Control register 4
+*/
+#define LIS3DH_CTRL_REG4 0x23
+#define LIS3DH_CTRL_REG4_BDU_ACTIVE 0x88
 
 int main(void)
 {
@@ -101,6 +106,7 @@ int main(void)
     /******************************************/
     uint8_t ctrl_reg1; 
     ctrl_reg1=EEPROM_Startup();
+    
     /******************************************/
     /*            I2C Writing                 */
     /******************************************/
@@ -119,6 +125,35 @@ int main(void)
     else
         {
             UART_PutString("Error occurred during I2C comm to set control register 1\r\n");   
+        }
+        // setto il ctrl reg 4
+        uint8_t ctrl_reg4;
+        error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
+                                        LIS3DH_CTRL_REG4,
+                                        &ctrl_reg4);
+        if (error == NO_ERROR)
+    {
+        sprintf(message, "CTRL REGISTER 4: 0x%02X\r\n", ctrl_reg4);
+        UART_PutString(message); 
+    }
+    else
+    {
+        UART_PutString("Error occurred during I2C comm to read CTRL REG 4\r\n");   
+    }
+        if(ctrl_reg4!=LIS3DH_CTRL_REG4_BDU_ACTIVE){
+            ctrl_reg4=LIS3DH_CTRL_REG4_BDU_ACTIVE;
+            error=I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS,
+                                                LIS3DH_CTRL_REG4,
+                                                ctrl_reg4);
+            if (error == NO_ERROR)
+            {
+                sprintf(message, "CTRL REGISTER 4: 0x%02X\r\n", ctrl_reg4);
+                UART_PutString(message); 
+            }
+            else
+            {
+                UART_PutString("Error occurred during I2C comm to write CTRL REG 4\r\n");   
+            }
         }
     
     

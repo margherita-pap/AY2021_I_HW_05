@@ -39,22 +39,32 @@
 *   \brief Address of the Control register 4
 */
 #define LIS3DH_CTRL_REG4 0x23
+/**
+*   \0x88 in binary:1000 1000, macro for setting ctrl_reg4 
+*   \BDU bit to 1, output register are not updated until MSB and LSB reading
+*   \FS selection 00, so ±2g
+*   \ HR selection 1, so high-resolution enabled
+*/
 #define LIS3DH_CTRL_REG4_BDU_HR_ACTIVE 0x88
-
-#define STATUS_REG_ZYDA_HIGH 0x08
+/**
+*   \Macro for status register, if ZYXDA bit is 1
+    \X, Y and Z-axis new data available
+*/
+#define STATUS_REG_ZYXDA_HIGH 0x08
+/**
+*   \brief Address of the OUT_X_L 
+*/
 #define OUT_X_L 0x28
 
 void ConvertAcceleration(uint8_t* DataToSend, uint8_t* DataRead);
+void SystemStart(void);
    
 
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
-    I2C_Peripheral_Start();
-    UART_Start();
-    EEPROM_Start();
-    isr_PressedButton_StartEx(Custom_button_pressed_isr);
-    
+   
+    SystemStart();    
     CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
     
     // String to print out messages on the UART
@@ -162,6 +172,7 @@ int main(void)
     
     
     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+        
     uint8_t bits_ODR=0;
     uint8_t new_bits_ODR=0;
     uint8_t new_ctrl_reg1=0; 
@@ -188,7 +199,7 @@ int main(void)
                     new_ctrl_reg1=(new_bits_ODR<<4)|(ctrl_reg1 & 0x0F);
                 }
                 EEPROM_Startup_Update(new_ctrl_reg1);
-                UART_PutString("\r\nWriting new values..\r\n");
+                //UART_PutString("\r\nWriting new values..\r\n");
     
                 error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS,
                                                      LIS3DH_CTRL_REG1,
@@ -196,8 +207,8 @@ int main(void)
     
                 if (error == NO_ERROR)
                 {
-                        sprintf(message, "CONTROL REGISTER 1 successfully written as: 0x%02X\r\n", new_ctrl_reg1);
-                        UART_PutString(message);
+                        //sprintf(message, "CONTROL REGISTER 1 successfully written as: 0x%02X\r\n", new_ctrl_reg1);
+                        //UART_PutString(message);
                         flag_button_pressed=0;
                 }
                 else
@@ -211,14 +222,14 @@ int main(void)
             }    
          
     }
-        CyDelay(10);
-        uint8_t status_register; 
-        error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
-                                        LIS3DH_STATUS_REG,
-                                        &status_register);
+       
+     
+    error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
+                                            LIS3DH_STATUS_REG,
+                                            &status_register);
     
         if (error == NO_ERROR){
-            if(status_register & STATUS_REG_ZYDA_HIGH ){
+            if(status_register & STATUS_REG_ZYXDA_HIGH ){
                 error= I2C_Peripheral_ReadRegisterMulti(LIS3DH_DEVICE_ADDRESS,
                                                         OUT_X_L,
                                                         6, DataAcceleration);
@@ -229,9 +240,12 @@ int main(void)
                     UART_PutArray(OutArray,8);
                     
                 }
-            }
+                else{
+                    UART_PutString("qualcosa non funziona");
+                }
         
     }
+        }
     else
     {
         UART_PutString("Error occurred during I2C comm to read status register\r\n");   
@@ -253,7 +267,13 @@ int main(void)
 }
             
 
- 
+ void SystemStart(void){
+    I2C_Peripheral_Start();
+    UART_Start();
+    EEPROM_Start();
+    isr_PressedButton_StartEx(Custom_button_pressed_isr);
+}
+    
         
         
 /* [] END OF FILE */

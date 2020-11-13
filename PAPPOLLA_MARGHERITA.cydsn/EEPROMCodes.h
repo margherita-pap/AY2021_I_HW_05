@@ -25,7 +25,7 @@ uint8_t EEPROM_Startup(void){
     return eeprom_value;
 }
 //This function allows to update the register 0x00 in EEPROM memory
-//by writing the new value of ctrl_reg1.
+//by writing the new value of ctrl_reg1
 void EEPROM_Startup_Update(uint8_t new_ctrl_reg1){
      EEPROM_UpdateTemperature();
      EEPROM_WriteByte(new_ctrl_reg1, EEPROM_ADDRESS);
